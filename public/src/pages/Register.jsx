@@ -27,19 +27,22 @@ function Register() {
     event.preventDefault();
     if (handleValidation()) {
       const { password, username, email } = values;
-      const { data } = await axios.post(registerRoute, {
-        username,
-        email,
-        password,
-      });
-      if (data.status === false) {
-        toast.error(data.msg, toastOptions);
-        console.log("f");
-      } else if (data.status === true) {
-        localStorage.setItem("chat-app", JSON.stringify(data.user));
-        console.log("s");
-        navigate("/");
-      }
+      axios
+        .post(registerRoute, {
+          username,
+          email,
+          password,
+        })
+        .then((data) => {
+          if (data.status === false) {
+            toast.error(data.msg, toastOptions);
+            console.log("f");
+          } else if (data.status === true) {
+            localStorage.setItem("chat-app", JSON.stringify(data.user));
+            console.log("s");
+            navigate("/");
+          }
+        });
     }
   };
 
