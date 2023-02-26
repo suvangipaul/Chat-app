@@ -1,33 +1,51 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const userRoutes = require("./routes/userRoutes.js");
-const dotenv = require("dotenv")
+const authRoutes = require("./routes/auth");
+const messageRoutes = require("./routes/messages");
+const app = express();
+const socket = require("socket.io");
+require("dotenv").config();
 
-mongoose.set('strictQuery', false);
+app.use(cors());
+app.use(express.json());
 
-mongoose.connect("mongodb+srv://admin:admin1234@cluster0.hegku15.mongodb.net/?retryWrites=true&w=majority", {
+mongoose
+    .connect(process.env.MONGO_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     })
     .then(() => {
-        console.log("MongoDB Connected");
+        console.log("MongoDB Connetion Successfull");
     })
     .catch((err) => {
         console.log(err.message);
     });
 
-const app = express();
-dotenv.config();
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
 
-app.use(cors());
-app.use(express.json());
+const server = app.listen(process.env.PORT, () =>
+    console.log(`Server started on ${process.env.PORT}`)
+);
+const io = socket(server, {
+    cors: {
+        origin: "http://localhost:3000",
+        credentials: true,
+    },
+});
 
-app.use("/api/auth", userRoutes)
+global.onlineUsers = new Map();
+io.on("connection", (socket) => {
+    global.chatSocket = socket;
+    socket.on("add-user", (userId) => {
+        onlineUsers.set(userId, socket.id);
+    });
 
-
-
-
-app.listen(process.env.PORT, () => {
-    console.log(`Server started on PORT ${process.env.PORT}`);
+    socket.on("send-msg", (data) => {
+        const sendUserSocket = onlineUsers.get(data.to);
+        if (sendUserSocket) {
+            socket.to(sendUserSocket).emit("msg-recieve", data.msg);
+        }
+    });
 });
