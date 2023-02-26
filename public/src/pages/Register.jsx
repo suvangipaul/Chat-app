@@ -65,14 +65,11 @@ export default function Register() {
     event.preventDefault();
     if (handleValidation()) {
       const { email, username, password } = values;
-      const { data } = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        {
-          username,
-          email,
-          password,
-        }
-      );
+      const { data } = await axios.post(registerRoute, {
+        username,
+        email,
+        password,
+      });
 
       if (data.status === false) {
         toast.error(data.msg, toastOptions);
@@ -152,6 +149,7 @@ const FormContainer = styled.div`
       text-transform: uppercase;
     }
   }
+
   form {
     display: flex;
     flex-direction: column;
